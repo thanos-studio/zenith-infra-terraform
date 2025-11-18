@@ -20,10 +20,10 @@ module "secrets" {
   project_name          = var.project_name
   environment           = var.environment
   mysql_master_password = var.rds_master_password
-  enable_redis_secret   = var.elasticache_auth_token != ""
+  enable_redis_secret   = var.enable_redis_secret
   redis_auth_token      = var.elasticache_auth_token
-  enable_github_secret  = false
-  github_token          = ""
+  enable_github_secret  = var.enable_github_secret
+  github_token          = var.github_token
 }
 
 module "iam" {
@@ -39,7 +39,7 @@ module "vpc" {
   prefix                        = var.prefix
   bastion_key_name              = aws_key_pair.bastion.key_name
   bastion_instance_profile_name = module.iam.bastion_instance_profile_name
-  bastion_instance_type         = "t3.micro"
+  bastion_instance_type         = var.bastion_instance_type
 }
 
 module "bastion" {
@@ -50,7 +50,7 @@ module "bastion" {
   vpc_id                = module.vpc.vpc_id
   subnet_id             = module.vpc.public_subnet_ids[0]
   instance_name         = "bastion"
-  instance_type         = "t3.micro"
+  instance_type         = var.bastion_instance_type
   key_name              = aws_key_pair.bastion.key_name
   instance_profile_name = module.iam.bastion_instance_profile_name
 }
@@ -59,11 +59,11 @@ module "s3" {
   source = "../../modules/s3"
 
   prefix                            = local.prefix
-  web_static_bucket_allowed_headers = ["*"]
-  web_static_bucket_allowed_methods = ["GET", "POST", "PUT", "DELETE", "HEAD"]
-  web_static_bucket_allowed_origins = ["*"]
-  web_static_bucket_expose_headers  = []
-  web_static_bucket_max_age_seconds = 3600
+  web_static_bucket_allowed_headers = var.web_static_bucket_allowed_headers
+  web_static_bucket_allowed_methods = var.web_static_bucket_allowed_methods
+  web_static_bucket_allowed_origins = var.web_static_bucket_allowed_origins
+  web_static_bucket_expose_headers  = var.web_static_bucket_expose_headers
+  web_static_bucket_max_age_seconds = var.web_static_bucket_max_age_seconds
 }
 
 module "rds" {
@@ -79,23 +79,23 @@ module "rds" {
   subnet_ids = module.vpc.protected_subnet_ids
 
   engine         = "mysql"
-  engine_version = "8.0.42"
-  database_name  = "zenith"
+  engine_version = var.rds_engine_version
+  database_name  = var.rds_database_name
 
-  instance_class        = "db.t3.medium"
-  allocated_storage     = 30
-  max_allocated_storage = 50
-  storage_type          = "gp3"
+  instance_class        = var.rds_instance_class
+  allocated_storage     = var.rds_allocated_storage
+  max_allocated_storage = var.rds_max_allocated_storage
+  storage_type          = var.rds_storage_type
 
-  backup_window      = "00:00-03:00"
-  maintenance_window = "sat:17:00-sat:19:00"
+  backup_window      = var.rds_backup_window
+  maintenance_window = var.rds_maintenance_window
 
   master_username = "sigmoid"
   master_password = module.secrets.mysql_secret_value
 
-  publicly_accessible        = false
-  multi_az                   = true
-  auto_minor_version_upgrade = true
+  publicly_accessible        = var.rds_publicly_accessible
+  multi_az                   = var.rds_multi_az
+  auto_minor_version_upgrade = var.rds_auto_minor_version_upgrade
 
   allow_ingress_from_vpc = true
   allowed_cidr_blocks    = var.rds_allowed_cidr_blocks
@@ -116,14 +116,14 @@ module "elasticache" {
   vpc_cidr   = module.vpc.vpc_cidr_block
   subnet_ids = module.vpc.protected_subnet_ids
 
-  node_type      = "cache.t3.small"
-  engine_version = "7.1"
-  port           = 6379
+  node_type      = var.elasticache_node_type
+  engine_version = var.elasticache_engine_version
+  port           = var.elasticache_port
 
-  number_cache_clusters      = 2
-  maintenance_window         = "sun:20:00-sun:21:00"
-  snapshot_window            = "04:00-06:00"
-  snapshot_retention_limit   = 7
+  number_cache_clusters      = var.elasticache_number_cache_clusters
+  maintenance_window         = var.elasticache_maintenance_window
+  snapshot_window            = var.elasticache_snapshot_window
+  snapshot_retention_limit   = var.elasticache_snapshot_retention_limit
   automatic_failover_enabled = true
   multi_az_enabled           = true
 
@@ -143,7 +143,7 @@ module "ecr" {
   environment  = var.environment
   namespace    = var.prefix
 
-  repositories = ["news", "frontend", "backend"]
+  repositories = var.ecr_repositories
 
   lifecycle_policy_keep_count = 10
 }
@@ -153,7 +153,7 @@ module "eks" {
 
   project_name = var.project_name
   environment  = var.environment
-  cluster_name = "zenith-eks"
+  cluster_name = var.eks_cluster_name
 
   vpc_id             = module.vpc.vpc_id
   private_subnet_ids = module.vpc.private_subnet_ids
@@ -161,18 +161,18 @@ module "eks" {
   cluster_role_arn = module.iam.eks_cluster_role_arn
   node_role_arn    = module.iam.eks_node_role_arn
 
-  cluster_version            = "1.29"
-  endpoint_private_access    = true
-  endpoint_public_access     = true
-  public_access_cidrs        = ["0.0.0.0/0"]
-  node_instance_types        = ["c5.large"]
-  node_desired_size          = 2
-  node_min_size              = 2
-  node_max_size              = 3
-  node_capacity_type         = "ON_DEMAND"
-  node_labels                = { app = "zenith" }
-  enable_container_insights  = true
-  cluster_log_retention_days = 30
+  cluster_version            = var.eks_cluster_version
+  endpoint_private_access    = var.eks_endpoint_private_access
+  endpoint_public_access     = var.eks_endpoint_public_access
+  public_access_cidrs        = var.eks_public_access_cidrs
+  node_instance_types        = var.eks_node_instance_types
+  node_desired_size          = var.eks_node_desired_size
+  node_min_size              = var.eks_node_min_size
+  node_max_size              = var.eks_node_max_size
+  node_capacity_type         = var.eks_node_capacity_type
+  node_labels                = var.eks_node_labels
+  enable_container_insights  = var.eks_enable_container_insights
+  cluster_log_retention_days = var.eks_cluster_log_retention_days
 }
 
 module "alb_app" {
@@ -180,43 +180,16 @@ module "alb_app" {
 
   project_name      = var.project_name
   environment       = var.environment
-  name              = "zenith-app-alb"
+  name              = var.app_alb_config.name
   vpc_id            = module.vpc.vpc_id
   public_subnet_ids = module.vpc.public_subnet_ids
 
-  allowed_ingress_cidrs     = ["0.0.0.0/0"]
-  enable_http_listener      = true
-  enable_https_listener     = false
-  default_target_group_name = "frontend"
-
-  enable_waf = true
-
-  target_groups = [
-    {
-      name                  = "frontend"
-      port                  = 80
-      protocol              = "HTTP"
-      target_type           = "ip"
-      health_check_path     = "/"
-      health_check_interval = 30
-      health_check_timeout  = 5
-      healthy_threshold     = 5
-      unhealthy_threshold   = 2
-      health_check_matcher  = "200-399"
-    },
-    {
-      name                  = "backend"
-      port                  = 8080
-      protocol              = "HTTP"
-      target_type           = "ip"
-      health_check_path     = "/health"
-      health_check_interval = 30
-      health_check_timeout  = 5
-      healthy_threshold     = 5
-      unhealthy_threshold   = 2
-      health_check_matcher  = "200-399"
-    }
-  ]
+  allowed_ingress_cidrs     = var.app_alb_config.allowed_ingress_cidrs
+  enable_http_listener      = var.app_alb_config.enable_http_listener
+  enable_https_listener     = var.app_alb_config.enable_https_listener
+  enable_waf                = var.app_alb_config.enable_waf
+  default_target_group_name = var.app_alb_config.default_target_group_name
+  target_groups             = var.app_alb_config.target_groups
 }
 
 module "alb_news" {
@@ -224,31 +197,16 @@ module "alb_news" {
 
   project_name      = var.project_name
   environment       = var.environment
-  name              = "zenith-news-alb"
+  name              = var.news_alb_config.name
   vpc_id            = module.vpc.vpc_id
   public_subnet_ids = module.vpc.public_subnet_ids
 
-  allowed_ingress_cidrs     = ["0.0.0.0/0"]
-  enable_http_listener      = true
-  enable_https_listener     = false
-  default_target_group_name = "news"
-
-  enable_waf = true
-
-  target_groups = [
-    {
-      name                  = "news"
-      port                  = 8081
-      protocol              = "HTTP"
-      target_type           = "ip"
-      health_check_path     = "/health"
-      health_check_interval = 30
-      health_check_timeout  = 5
-      healthy_threshold     = 5
-      unhealthy_threshold   = 2
-      health_check_matcher  = "200-399"
-    }
-  ]
+  allowed_ingress_cidrs     = var.news_alb_config.allowed_ingress_cidrs
+  enable_http_listener      = var.news_alb_config.enable_http_listener
+  enable_https_listener     = var.news_alb_config.enable_https_listener
+  enable_waf                = var.news_alb_config.enable_waf
+  default_target_group_name = var.news_alb_config.default_target_group_name
+  target_groups             = var.news_alb_config.target_groups
 }
 
 module "cloudwatch" {

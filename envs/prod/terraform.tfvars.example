@@ -1,0 +1,119 @@
+# Environment metadata
+environment  = "prod"
+project_name = "zenith"
+region       = "ap-northeast-2"
+prefix       = "thanos"
+
+# Bastion
+bastion_instance_type = ""
+
+# S3 CORS
+web_static_bucket_allowed_headers = ["*"]
+web_static_bucket_allowed_methods = ["GET", "POST", "PUT", "DELETE", "HEAD"]
+web_static_bucket_allowed_origins = ["*"]
+web_static_bucket_expose_headers  = []
+web_static_bucket_max_age_seconds = 3600
+
+# RDS
+rds_engine_version             = ""
+rds_database_name              = ""
+rds_instance_class             = ""
+rds_storage_type               = "gp3"
+rds_allocated_storage          = 
+rds_max_allocated_storage      = 
+rds_backup_window              = ""
+rds_maintenance_window         = ""
+rds_publicly_accessible        = false
+rds_multi_az                   = true
+rds_auto_minor_version_upgrade = true
+
+# Redis / ElastiCache
+elasticache_node_type                 = ""
+elasticache_engine_version            = ""
+elasticache_port                      = 
+elasticache_number_cache_clusters     = 
+elasticache_maintenance_window        = ""
+elasticache_snapshot_window           = ""
+elasticache_snapshot_retention_limit  = 7
+enable_redis_secret                   = false
+
+# ECR
+ecr_repositories = ["", "", ""]
+
+# EKS
+eks_cluster_name               = ""
+eks_cluster_version            = ""
+eks_endpoint_private_access    = true
+eks_endpoint_public_access     = true
+eks_public_access_cidrs        = ["0.0.0.0/0"]
+eks_node_instance_types        = ["c5.large"]
+eks_node_desired_size          = 
+eks_node_min_size              = 
+eks_node_max_size              = 
+eks_node_capacity_type         = "ON_DEMAND"
+eks_node_labels                = { app = "" }
+eks_enable_container_insights  = true
+eks_cluster_log_retention_days = 30
+
+# ALB Configurations
+app_alb_config = {
+  name                      = "zenith-app-alb"
+  allowed_ingress_cidrs     = ["0.0.0.0/0"]
+  enable_http_listener      = true
+  enable_https_listener     = false
+  enable_waf                = true
+  default_target_group_name = "frontend"
+  target_groups = [
+    {
+      name                  = "frontend"
+      port                  = 80
+      protocol              = "HTTP"
+      target_type           = "ip"
+      health_check_path     = "/"
+      health_check_interval = 30
+      health_check_timeout  = 5
+      healthy_threshold     = 5
+      unhealthy_threshold   = 2
+      health_check_matcher  = "200-399"
+    },
+    {
+      name                  = "backend"
+      port                  = 8080
+      protocol              = "HTTP"
+      target_type           = "ip"
+      health_check_path     = "/health"
+      health_check_interval = 30
+      health_check_timeout  = 5
+      healthy_threshold     = 5
+      unhealthy_threshold   = 2
+      health_check_matcher  = "200-399"
+    }
+  ]
+}
+
+news_alb_config = {
+  name                      = "zenith-news-alb"
+  allowed_ingress_cidrs     = ["0.0.0.0/0"]
+  enable_http_listener      = true
+  enable_https_listener     = false
+  enable_waf                = true
+  default_target_group_name = "news"
+  target_groups = [
+    {
+      name                  = "news"
+      port                  = 8081
+      protocol              = "HTTP"
+      target_type           = "ip"
+      health_check_path     = "/health"
+      health_check_interval = 30
+      health_check_timeout  = 5
+      healthy_threshold     = 5
+      unhealthy_threshold   = 2
+      health_check_matcher  = "200-399"
+    }
+  ]
+}
+
+# Secrets management toggles
+enable_github_secret = true
+github_token         = ""

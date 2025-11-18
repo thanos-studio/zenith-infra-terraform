@@ -146,7 +146,7 @@ output "mysql_secret_name" {
 output "redis_secret_arn" {
   description = "ARN of the Redis auth token secret (null when not created)."
   value       = module.secrets.redis_secret_arn
-  sensitive = true
+  sensitive   = true
 }
 
 output "redis_secret_name" {
