@@ -132,3 +132,25 @@ output "news_alb_waf_arn" {
   description = "WAF ARN attached to the news ALB."
   value       = module.alb_news.waf_arn
 }
+
+output "mysql_secret_arn" {
+  description = "ARN of the Secrets Manager entry holding the MySQL password."
+  value       = module.secrets.mysql_secret_arn
+}
+
+output "mysql_secret_name" {
+  description = "Name of the MySQL password secret."
+  value       = module.secrets.mysql_secret_name
+}
+
+output "redis_secret_arn" {
+  description = "ARN of the Redis auth token secret (null when not created)."
+  value       = module.secrets.redis_secret_arn
+  sensitive = true
+}
+
+output "redis_secret_name" {
+  description = "Name of the Redis auth token secret (null when not created)."
+  value       = module.secrets.redis_secret_name
+  sensitive   = true
+}

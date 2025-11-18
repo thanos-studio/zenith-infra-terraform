@@ -14,9 +14,16 @@ resource "aws_key_pair" "bastion" {
   public_key = local.keypair
 }
 
-# Not Implemented
 module "secrets" {
   source = "../../modules/secrets"
+
+  project_name          = var.project_name
+  environment           = var.environment
+  mysql_master_password = var.rds_master_password
+  enable_redis_secret   = var.elasticache_auth_token != ""
+  redis_auth_token      = var.elasticache_auth_token
+  enable_github_secret  = false
+  github_token          = ""
 }
 
 module "iam" {
@@ -84,7 +91,7 @@ module "rds" {
   maintenance_window = "sat:17:00-sat:19:00"
 
   master_username = "sigmoid"
-  master_password = var.rds_master_password
+  master_password = module.secrets.mysql_secret_value
 
   publicly_accessible        = false
   multi_az                   = true
@@ -120,7 +127,7 @@ module "elasticache" {
   automatic_failover_enabled = true
   multi_az_enabled           = true
 
-  auth_token = var.elasticache_auth_token
+  auth_token = module.secrets.redis_secret_value != null ? module.secrets.redis_secret_value : ""
 
   allow_ingress_from_vpc = true
   allowed_cidr_blocks    = var.elasticache_allowed_cidr_blocks
