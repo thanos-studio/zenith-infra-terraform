@@ -143,10 +143,83 @@ module "ecr" {
 
 module "eks" {
   source = "../../modules/eks"
+
+  project_name = var.project_name
+  environment  = var.environment
+  cluster_name = "zenith-eks"
+
+  vpc_id             = module.vpc.vpc_id
+  private_subnet_ids = module.vpc.private_subnet_ids
+
+  cluster_role_arn = module.iam.eks_cluster_role_arn
+  node_role_arn    = module.iam.eks_node_role_arn
+
+  cluster_version            = "1.29"
+  endpoint_private_access    = true
+  endpoint_public_access     = true
+  public_access_cidrs        = ["0.0.0.0/0"]
+  node_instance_types        = ["c5.large"]
+  node_desired_size          = 2
+  node_min_size              = 2
+  node_max_size              = 3
+  node_capacity_type         = "ON_DEMAND"
+  node_labels                = { app = "zenith" }
+  enable_container_insights  = true
+  cluster_log_retention_days = 30
 }
 
 module "load_balancers" {
   source = "../../modules/load_balancers"
+
+  project_name      = var.project_name
+  environment       = var.environment
+  name              = "zenith-alb"
+  vpc_id            = module.vpc.vpc_id
+  public_subnet_ids = module.vpc.public_subnet_ids
+
+  allowed_ingress_cidrs     = ["0.0.0.0/0"]
+  enable_http_listener      = true
+  enable_https_listener     = false
+  default_target_group_name = "frontend"
+
+  target_groups = [
+    {
+      name                  = "frontend"
+      port                  = 80
+      protocol              = "HTTP"
+      target_type           = "ip"
+      health_check_path     = "/"
+      health_check_interval = 30
+      health_check_timeout  = 5
+      healthy_threshold     = 5
+      unhealthy_threshold   = 2
+      health_check_matcher  = "200-399"
+    },
+    {
+      name                  = "backend"
+      port                  = 8080
+      protocol              = "HTTP"
+      target_type           = "ip"
+      health_check_path     = "/health"
+      health_check_interval = 30
+      health_check_timeout  = 5
+      healthy_threshold     = 5
+      unhealthy_threshold   = 2
+      health_check_matcher  = "200-399"
+    },
+    {
+      name                  = "news"
+      port                  = 8081
+      protocol              = "HTTP"
+      target_type           = "ip"
+      health_check_path     = "/health"
+      health_check_interval = 30
+      health_check_timeout  = 5
+      healthy_threshold     = 5
+      unhealthy_threshold   = 2
+      health_check_matcher  = "200-399"
+    }
+  ]
 }
 
 module "cloudfront" {
