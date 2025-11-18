@@ -18,6 +18,11 @@ output "private_subnet_ids" {
   value       = aws_subnet.private[*].id
 }
 
+output "protected_subnet_ids" {
+  description = "IDs of the protected subnets spread across the availability zones."
+  value       = aws_subnet.protected[*].id
+}
+
 output "public_route_table_id" {
   description = "ID of the public route table that connects to the internet gateway."
   value       = aws_route_table.public.id

@@ -22,13 +22,3 @@ output "app_data_bucket_arn" {
   description = "ARN of the application data bucket."
   value       = aws_s3_bucket.app_data_bucket.arn
 }
-
-output "artifacts_bucket_name" {
-  description = "Name of the S3 bucket used for artifacts."
-  value       = aws_s3_bucket.artifacts_bucket.bucket
-}
-
-output "artifacts_bucket_arn" {
-  description = "ARN of the artifacts bucket."
-  value       = aws_s3_bucket.artifacts_bucket.arn
-}

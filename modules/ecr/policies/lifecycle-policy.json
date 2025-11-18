@@ -1,0 +1,16 @@
+{
+  "rules": [
+    {
+      "rulePriority": 1,
+      "description": "Expire images beyond the most recent 10",
+      "selection": {
+        "tagStatus": "any",
+        "countType": "imageCountMoreThan",
+        "countNumber": ${count_number}
+      },
+      "action": {
+        "type": "expire"
+      }
+    }
+  ]
+}

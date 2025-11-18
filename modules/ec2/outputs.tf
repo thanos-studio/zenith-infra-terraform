@@ -25,7 +25,7 @@ output "security_group_id" {
 
 output "key_pair_name" {
   description = "Name of the SSH key pair associated with the EC2 instance."
-  value       = aws_key_pair.main.key_name
+  value       = var.key_name
 }
 
 output "elastic_ip_allocation_id" {
