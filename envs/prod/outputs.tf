@@ -83,22 +83,52 @@ output "eks_node_group_name" {
   value       = module.eks.node_group_name
 }
 
-output "alb_arn" {
-  description = "ARN of the Application Load Balancer."
-  value       = module.load_balancers.load_balancer_arn
+output "app_alb_arn" {
+  description = "ARN of the Application Load Balancer serving frontend/backend traffic."
+  value       = module.alb_app.load_balancer_arn
 }
 
-output "alb_dns_name" {
-  description = "DNS name of the ALB."
-  value       = module.load_balancers.load_balancer_dns_name
+output "app_alb_dns_name" {
+  description = "DNS name of the frontend/backend ALB."
+  value       = module.alb_app.load_balancer_dns_name
 }
 
-output "alb_security_group_id" {
-  description = "Security group associated with the ALB."
-  value       = module.load_balancers.security_group_id
+output "app_alb_security_group_id" {
+  description = "Security group associated with the frontend/backend ALB."
+  value       = module.alb_app.security_group_id
 }
 
-output "alb_target_group_arns" {
-  description = "Map of target group names to their ARNs for TargetGroupBinding definitions."
-  value       = module.load_balancers.target_group_arns
+output "app_alb_target_group_arns" {
+  description = "Target group ARNs for frontend/backend services."
+  value       = module.alb_app.target_group_arns
+}
+
+output "app_alb_waf_arn" {
+  description = "WAF ARN attached to the frontend/backend ALB."
+  value       = module.alb_app.waf_arn
+}
+
+output "news_alb_arn" {
+  description = "ARN of the Application Load Balancer serving news traffic."
+  value       = module.alb_news.load_balancer_arn
+}
+
+output "news_alb_dns_name" {
+  description = "DNS name of the news ALB."
+  value       = module.alb_news.load_balancer_dns_name
+}
+
+output "news_alb_security_group_id" {
+  description = "Security group associated with the news ALB."
+  value       = module.alb_news.security_group_id
+}
+
+output "news_alb_target_group_arns" {
+  description = "Target group ARNs for news services."
+  value       = module.alb_news.target_group_arns
+}
+
+output "news_alb_waf_arn" {
+  description = "WAF ARN attached to the news ALB."
+  value       = module.alb_news.waf_arn
 }

@@ -114,3 +114,31 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "enable_waf" {
+  description = "Create and associate a WAFv2 web ACL with the ALB."
+  type        = bool
+  default     = false
+}
+
+variable "waf_managed_rule_groups" {
+  description = "Managed rule groups applied to the WAF web ACL when enabled."
+  type = list(object({
+    name        = string
+    vendor_name = string
+    priority    = number
+    version     = optional(string)
+  }))
+  default = [
+    {
+      name        = "AWSManagedRulesCommonRuleSet"
+      vendor_name = "AWS"
+      priority    = 1
+    }
+  ]
+
+  validation {
+    condition     = var.enable_waf == false || length(var.waf_managed_rule_groups) > 0
+    error_message = "At least one managed rule group must be supplied when enable_waf is true."
+  }
+}

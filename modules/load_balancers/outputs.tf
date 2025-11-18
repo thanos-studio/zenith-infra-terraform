@@ -32,3 +32,8 @@ output "https_listener_arn" {
   description = "ARN of the HTTPS listener (null when disabled)."
   value       = length(aws_lb_listener.https) > 0 ? aws_lb_listener.https[0].arn : null
 }
+
+output "waf_arn" {
+  description = "ARN of the associated WAFv2 web ACL (null when disabled)."
+  value       = length(aws_wafv2_web_acl.this) > 0 ? aws_wafv2_web_acl.this[0].arn : null
+}

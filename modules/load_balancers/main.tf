@@ -115,3 +115,55 @@ resource "aws_lb_listener" "https" {
     target_group_arn = aws_lb_target_group.main[local.default_target_group_name].arn
   }
 }
+
+### --------------------------------------------------
+### WAF (Optional)
+### --------------------------------------------------
+resource "aws_wafv2_web_acl" "this" {
+  count       = var.enable_waf ? 1 : 0
+  name        = "${local.load_balancer_name}-waf"
+  description = "WAF protecting ${local.load_balancer_name}"
+  scope       = "REGIONAL"
+
+  default_action {
+    allow {}
+  }
+
+  visibility_config {
+    cloudwatch_metrics_enabled = true
+    metric_name                = "${local.load_balancer_name}-waf"
+    sampled_requests_enabled   = true
+  }
+
+  dynamic "rule" {
+    for_each = var.waf_managed_rule_groups
+    content {
+      name     = rule.value.name
+      priority = rule.value.priority
+
+      override_action {
+        none {}
+      }
+
+      statement {
+        managed_rule_group_statement {
+          name        = rule.value.name
+          vendor_name = rule.value.vendor_name
+          version     = try(rule.value.version, null)
+        }
+      }
+
+      visibility_config {
+        cloudwatch_metrics_enabled = true
+        metric_name                = "${local.load_balancer_name}-${rule.value.name}"
+        sampled_requests_enabled   = true
+      }
+    }
+  }
+}
+
+resource "aws_wafv2_web_acl_association" "this" {
+  count        = var.enable_waf ? 1 : 0
+  resource_arn = aws_lb.main.arn
+  web_acl_arn  = aws_wafv2_web_acl.this[0].arn
+}

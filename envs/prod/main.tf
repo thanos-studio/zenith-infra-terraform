@@ -168,12 +168,12 @@ module "eks" {
   cluster_log_retention_days = 30
 }
 
-module "load_balancers" {
+module "alb_app" {
   source = "../../modules/load_balancers"
 
   project_name      = var.project_name
   environment       = var.environment
-  name              = "zenith-alb"
+  name              = "zenith-app-alb"
   vpc_id            = module.vpc.vpc_id
   public_subnet_ids = module.vpc.public_subnet_ids
 
@@ -181,6 +181,8 @@ module "load_balancers" {
   enable_http_listener      = true
   enable_https_listener     = false
   default_target_group_name = "frontend"
+
+  enable_waf = true
 
   target_groups = [
     {
@@ -206,7 +208,27 @@ module "load_balancers" {
       healthy_threshold     = 5
       unhealthy_threshold   = 2
       health_check_matcher  = "200-399"
-    },
+    }
+  ]
+}
+
+module "alb_news" {
+  source = "../../modules/load_balancers"
+
+  project_name      = var.project_name
+  environment       = var.environment
+  name              = "zenith-news-alb"
+  vpc_id            = module.vpc.vpc_id
+  public_subnet_ids = module.vpc.public_subnet_ids
+
+  allowed_ingress_cidrs     = ["0.0.0.0/0"]
+  enable_http_listener      = true
+  enable_https_listener     = false
+  default_target_group_name = "news"
+
+  enable_waf = true
+
+  target_groups = [
     {
       name                  = "news"
       port                  = 8081
@@ -220,10 +242,6 @@ module "load_balancers" {
       health_check_matcher  = "200-399"
     }
   ]
-}
-
-module "cloudfront" {
-  source = "../../modules/cloudfront"
 }
 
 module "cloudwatch" {
