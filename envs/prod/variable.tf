@@ -74,6 +74,11 @@ variable "bastion_instance_type" {
   type        = string
 }
 
+variable "bastion_root_volume_size" {
+  description = "Root volume size (GiB) for the bastion host."
+  type        = number
+}
+
 variable "web_static_bucket_allowed_headers" {
   description = "Allowed headers for the web static bucket CORS configuration."
   type        = list(string)
@@ -222,6 +227,11 @@ variable "eks_public_access_cidrs" {
 variable "eks_node_instance_types" {
   description = "Instance types for the managed node group."
   type        = list(string)
+}
+
+variable "eks_node_ami_type" {
+  description = "AMI type used by the EKS managed node group."
+  type        = string
 }
 
 variable "eks_node_desired_size" {

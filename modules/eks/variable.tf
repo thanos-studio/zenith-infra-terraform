@@ -79,6 +79,12 @@ variable "node_instance_types" {
   default     = ["c5.large"]
 }
 
+variable "node_ami_type" {
+  description = "AMI type used by the managed node group."
+  type        = string
+  default     = "AL2023_x86_64_STANDARD"
+}
+
 variable "node_desired_size" {
   description = "Desired size of the managed node group."
   type        = number

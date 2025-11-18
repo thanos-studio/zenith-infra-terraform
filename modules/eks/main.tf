@@ -121,6 +121,16 @@ resource "aws_launch_template" "node" {
   vpc_security_group_ids = [aws_security_group.node.id]
   tags                   = merge(local.tags, { Name = "${local.cluster_name}-ng" })
 
+  block_device_mappings {
+    device_name = "/dev/xvda"
+
+    ebs {
+      volume_size = var.node_disk_size
+      volume_type = "gp3"
+      encrypted   = true
+    }
+  }
+
   tag_specifications {
     resource_type = "instance"
     tags = merge(local.tags, {
@@ -144,8 +154,7 @@ resource "aws_eks_node_group" "this" {
 
   capacity_type  = var.node_capacity_type
   instance_types = var.node_instance_types
-  disk_size      = var.node_disk_size
-  ami_type       = "AL2_x86_64"
+  ami_type       = var.node_ami_type
 
   labels = var.node_labels
 
@@ -172,4 +181,5 @@ resource "aws_eks_addon" "cloudwatch_observability" {
   addon_name                  = "amazon-cloudwatch-observability"
   resolve_conflicts_on_create = "OVERWRITE"
   resolve_conflicts_on_update = "OVERWRITE"
+  depends_on                  = [aws_eks_cluster.this, aws_eks_node_group.this]
 }

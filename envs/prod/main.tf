@@ -51,6 +51,7 @@ module "bastion" {
   subnet_id             = module.vpc.public_subnet_ids[0]
   instance_name         = "bastion"
   instance_type         = var.bastion_instance_type
+  root_volume_size      = var.bastion_root_volume_size
   key_name              = aws_key_pair.bastion.key_name
   instance_profile_name = module.iam.bastion_instance_profile_name
 }
@@ -166,6 +167,7 @@ module "eks" {
   endpoint_public_access     = var.eks_endpoint_public_access
   public_access_cidrs        = var.eks_public_access_cidrs
   node_instance_types        = var.eks_node_instance_types
+  node_ami_type              = var.eks_node_ami_type
   node_desired_size          = var.eks_node_desired_size
   node_min_size              = var.eks_node_min_size
   node_max_size              = var.eks_node_max_size
