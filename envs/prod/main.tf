@@ -20,10 +20,15 @@ module "secrets" {
   project_name          = var.project_name
   environment           = var.environment
   mysql_master_password = var.rds_master_password
+  mysql_master_username = "sigmoid"
+  mysql_endpoint        = module.rds.endpoint
   enable_redis_secret   = var.enable_redis_secret
   redis_auth_token      = var.elasticache_auth_token
+  redis_endpoint        = module.elasticache.primary_endpoint
   enable_github_secret  = var.enable_github_secret
   github_token          = var.github_token
+
+  depends_on = [module.rds, module.elasticache]
 }
 
 module "iam" {
@@ -92,7 +97,7 @@ module "rds" {
   maintenance_window = var.rds_maintenance_window
 
   master_username = "sigmoid"
-  master_password = module.secrets.mysql_secret_value
+  master_password = module.secrets.mysql_password
 
   publicly_accessible        = var.rds_publicly_accessible
   multi_az                   = var.rds_multi_az

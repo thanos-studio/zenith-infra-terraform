@@ -14,6 +14,18 @@ variable "mysql_master_password" {
   sensitive   = true
 }
 
+variable "mysql_master_username" {
+  description = "Master username for MySQL database."
+  type        = string
+  default     = "sigmoid"
+}
+
+variable "mysql_endpoint" {
+  description = "MySQL database endpoint URL."
+  type        = string
+  default     = ""
+}
+
 variable "enable_redis_secret" {
   description = "Whether to create a Redis (ElastiCache) auth token secret."
   type        = bool
@@ -24,6 +36,12 @@ variable "redis_auth_token" {
   description = "Redis auth token stored in Secrets Manager when enable_redis_secret is true."
   type        = string
   sensitive   = true
+  default     = ""
+}
+
+variable "redis_endpoint" {
+  description = "Redis primary endpoint URL."
+  type        = string
   default     = ""
 }
 

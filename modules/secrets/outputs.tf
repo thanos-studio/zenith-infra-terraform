@@ -9,8 +9,14 @@ output "mysql_secret_name" {
 }
 
 output "mysql_secret_value" {
-  description = "Value of the MySQL master password secret."
+  description = "JSON value of the MySQL database secret."
   value       = aws_secretsmanager_secret_version.mysql.secret_string
+  sensitive   = true
+}
+
+output "mysql_password" {
+  description = "MySQL master password (for RDS module usage)."
+  value       = var.mysql_master_password
   sensitive   = true
 }
 
