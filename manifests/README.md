@@ -1,1 +1,0 @@
-k8s manifests will be stored here

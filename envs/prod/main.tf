@@ -213,6 +213,42 @@ module "alb_news" {
 
 module "cloudwatch" {
   source = "../../modules/cloudwatch"
+
+  project_name = var.project_name
+  environment  = var.environment
+  region       = var.region
+
+  eks_cluster_name    = module.eks.cluster_name
+  eks_node_group_name = module.eks.node_group_name
+
+  rds_instance_identifier          = module.rds.instance_identifier
+  elasticache_replication_group_id = module.elasticache.replication_group_id
+
+  load_balancers = [
+    {
+      name       = var.app_alb_config.name
+      arn_suffix = module.alb_app.load_balancer_arn_suffix
+    },
+    {
+      name       = var.news_alb_config.name
+      arn_suffix = module.alb_news.load_balancer_arn_suffix
+    }
+  ]
+
+  cloudfront_distribution_ids = var.cloudfront_distribution_ids
+
+  service_target_groups = concat(
+    [for name, suffix in module.alb_app.target_group_arn_suffixes : {
+      name                     = "app-${name}"
+      target_group_arn_suffix  = suffix
+      load_balancer_arn_suffix = module.alb_app.load_balancer_arn_suffix
+    }],
+    [for name, suffix in module.alb_news.target_group_arn_suffixes : {
+      name                     = "news-${name}"
+      target_group_arn_suffix  = suffix
+      load_balancer_arn_suffix = module.alb_news.load_balancer_arn_suffix
+    }]
+  )
 }
 
 module "route53" {

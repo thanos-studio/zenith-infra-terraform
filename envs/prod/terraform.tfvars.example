@@ -116,6 +116,9 @@ news_alb_config = {
   ]
 }
 
+# Edge cache (optional)
+cloudfront_distribution_ids = []
+
 # Secrets management toggles
 enable_github_secret = true
 github_token         = ""

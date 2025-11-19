@@ -316,3 +316,9 @@ variable "news_alb_config" {
     }))
   })
 }
+
+variable "cloudfront_distribution_ids" {
+  description = "CloudFront distribution IDs that should appear on the dashboards."
+  type        = list(string)
+  default     = []
+}

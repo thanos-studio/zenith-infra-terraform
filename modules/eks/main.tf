@@ -112,6 +112,19 @@ resource "aws_eks_cluster" "this" {
   tags = local.tags
 }
 
+data "tls_certificate" "cluster_oidc" {
+  url = aws_eks_cluster.this.identity[0].oidc[0].issuer
+}
+
+resource "aws_iam_openid_connect_provider" "cluster" {
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = [data.tls_certificate.cluster_oidc.certificates[0].sha1_fingerprint]
+  url             = aws_eks_cluster.this.identity[0].oidc[0].issuer
+
+  tags = local.tags
+}
+
+
 ### --------------------------------------------------
 ### Node Group
 ### --------------------------------------------------
@@ -181,5 +194,9 @@ resource "aws_eks_addon" "cloudwatch_observability" {
   addon_name                  = "amazon-cloudwatch-observability"
   resolve_conflicts_on_create = "OVERWRITE"
   resolve_conflicts_on_update = "OVERWRITE"
-  depends_on                  = [aws_eks_cluster.this, aws_eks_node_group.this]
+  depends_on = [
+    aws_eks_cluster.this,
+    aws_eks_node_group.this,
+    aws_iam_openid_connect_provider.cluster
+  ]
 }
