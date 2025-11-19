@@ -97,7 +97,7 @@ module "rds" {
   maintenance_window = var.rds_maintenance_window
 
   master_username = "sigmoid"
-  master_password = module.secrets.mysql_password
+  master_password = var.rds_master_password
 
   publicly_accessible        = var.rds_publicly_accessible
   multi_az                   = var.rds_multi_az
@@ -133,7 +133,7 @@ module "elasticache" {
   automatic_failover_enabled = true
   multi_az_enabled           = true
 
-  auth_token = module.secrets.redis_secret_value != null ? module.secrets.redis_secret_value : ""
+  auth_token = var.elasticache_auth_token
 
   allow_ingress_from_vpc = true
   allowed_cidr_blocks    = var.elasticache_allowed_cidr_blocks

@@ -76,8 +76,8 @@ resource "aws_security_group_rule" "cluster_egress_all" {
 resource "aws_security_group_rule" "node_ingress_cluster_api" {
   type                     = "ingress"
   security_group_id        = aws_security_group.node.id
-  from_port                = 443
-  to_port                  = 443
+  from_port                = 0
+  to_port                  = 65535
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.cluster.id
   description              = "Allow API server callbacks from cluster security group"
@@ -88,7 +88,7 @@ resource "aws_security_group_rule" "node_ingress_self" {
   security_group_id        = aws_security_group.node.id
   from_port                = 0
   to_port                  = 65535
-  protocol                 = "-1"
+  protocol                 = "tcp"
   source_security_group_id = aws_security_group.node.id
   description              = "Allow node-to-node communication"
 }
