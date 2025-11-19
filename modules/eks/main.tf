@@ -1,5 +1,19 @@
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
 locals {
   cluster_name = substr(lower(join("-", compact([var.project_name, var.environment, var.cluster_name]))), 0, 100)
+
+  external_secrets_role = templatefile("${path.module}/policies/external-secrets-role.json", {
+    AWS_ACCOUNT_ID   = data.aws_caller_identity.current.account_id
+    AWS_REGION       = data.aws_region.current.name
+    OIDC_PROVIDER_ID = aws_iam_openid_connect_provider.cluster.url
+  })
+
+  external_secrets_policy = templatefile("${path.module}/policies/external-secrets-policy.json", {
+    AWS_ACCOUNT_ID = data.aws_caller_identity.current.account_id
+    AWS_REGION     = data.aws_region.current.name
+  })
 
   tags = merge(
     {
@@ -124,6 +138,32 @@ resource "aws_iam_openid_connect_provider" "cluster" {
   tags = local.tags
 }
 
+data "aws_iam_policy_document" "cloudwatch_observability_assume_role" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.cluster.arn]
+    }
+
+    condition {
+      test     = "StringLike"
+      variable = "${replace(aws_iam_openid_connect_provider.cluster.url, "https://", "")}:sub"
+      values = [
+        "system:serviceaccount:amazon-cloudwatch:*"
+      ]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(aws_iam_openid_connect_provider.cluster.url, "https://", "")}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+  }
+}
+
 
 ### --------------------------------------------------
 ### Node Group
@@ -188,15 +228,76 @@ resource "aws_eks_node_group" "this" {
 ### --------------------------------------------------
 ### Add-ons
 ### --------------------------------------------------
+resource "aws_iam_role" "cloudwatch_observability" {
+  count = var.enable_container_insights ? 1 : 0
+
+  name               = "${local.cluster_name}-cloudwatch-observability"
+  assume_role_policy = data.aws_iam_policy_document.cloudwatch_observability_assume_role.json
+
+  tags = merge(local.tags, { Name = "${local.cluster_name}-cloudwatch-observability" })
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch_observability_cloudwatch" {
+  count = var.enable_container_insights ? 1 : 0
+
+  role       = aws_iam_role.cloudwatch_observability[count.index].name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch_observability_xray" {
+  count = var.enable_container_insights ? 1 : 0
+
+  role       = aws_iam_role.cloudwatch_observability[count.index].name
+  policy_arn = "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess"
+}
+
 resource "aws_eks_addon" "cloudwatch_observability" {
   count                       = var.enable_container_insights ? 1 : 0
   cluster_name                = aws_eks_cluster.this.name
   addon_name                  = "amazon-cloudwatch-observability"
+  service_account_role_arn    = aws_iam_role.cloudwatch_observability[count.index].arn
   resolve_conflicts_on_create = "OVERWRITE"
   resolve_conflicts_on_update = "OVERWRITE"
+
+  configuration_values = jsonencode({
+    agent = {
+      config = {
+        logs = {
+          metrics_collected = {
+            kubernetes = {
+              enhanced_container_insights = true
+            }
+          }
+        }
+      }
+    }
+  })
+
   depends_on = [
     aws_eks_cluster.this,
     aws_eks_node_group.this,
-    aws_iam_openid_connect_provider.cluster
+    aws_iam_openid_connect_provider.cluster,
+    aws_iam_role_policy_attachment.cloudwatch_observability_cloudwatch,
+    aws_iam_role_policy_attachment.cloudwatch_observability_xray
   ]
+}
+
+### --------------------------------------------------
+### IAM Role for External Secrets Operator
+### --------------------------------------------------
+resource "aws_iam_role" "external_secrets_operator_role" {
+  name               = "${local.cluster_name}-external-secrets-operator-role"
+  assume_role_policy = local.external_secrets_role
+}
+
+resource "aws_iam_policy" "external_secrets_operator_policy" {
+  name   = "${local.cluster_name}-external-secrets-operator-policy"
+  policy = local.external_secrets_policy
+
+  tags = merge(local.tags, { Name = "${local.cluster_name}-external-secrets-operator-policy" })
+}
+
+resource "aws_iam_role_policy_attachment" "external_secrets_operator_policy_attachment" {
+  role       = aws_iam_role.external_secrets_operator_role.name
+  policy_arn = aws_iam_policy.external_secrets_operator_policy.arn
 }
