@@ -4,7 +4,7 @@ variable "prefix" {
 }
 
 variable "origin_domain_name" {
-  description = "Origin domain name (e.g. S3 bucket domain) backing the distribution."
+  description = "Domain name for the S3 origin backing the /static path (e.g. bucket.s3.amazonaws.com)."
   type        = string
 }
 
@@ -12,6 +12,52 @@ variable "origin_id" {
   description = "Optional explicit origin ID. Defaults to <prefix>-s3-origin."
   type        = string
   default     = ""
+}
+
+variable "alb_origin_domain_name" {
+  description = "Domain name for the Application Load Balancer origin."
+  type        = string
+}
+
+variable "alb_origin_id" {
+  description = "Optional explicit origin ID for the ALB. Defaults to <prefix>-alb-origin."
+  type        = string
+  default     = ""
+}
+
+variable "alb_origin_http_port" {
+  description = "HTTP port used by the ALB origin."
+  type        = number
+  default     = 80
+}
+
+variable "alb_origin_https_port" {
+  description = "HTTPS port used by the ALB origin."
+  type        = number
+  default     = 443
+}
+
+variable "alb_origin_protocol_policy" {
+  description = "Protocol policy CloudFront should use when connecting to the ALB origin."
+  type        = string
+  default     = "https-only"
+
+  validation {
+    condition     = contains(["http-only", "match-viewer", "https-only"], var.alb_origin_protocol_policy)
+    error_message = "alb_origin_protocol_policy must be one of http-only, https-only, or match-viewer."
+  }
+}
+
+variable "alb_origin_ssl_protocols" {
+  description = "List of SSL protocols supported by the ALB origin."
+  type        = list(string)
+  default     = ["TLSv1.2"]
+}
+
+variable "static_path_pattern" {
+  description = "Path pattern that should be served from the S3 origin."
+  type        = string
+  default     = "/static/*"
 }
 
 variable "comment" {

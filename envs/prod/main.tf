@@ -72,48 +72,6 @@ module "s3" {
   web_static_bucket_max_age_seconds = var.web_static_bucket_max_age_seconds
 }
 
-module "cloudfront" {
-  source = "../../modules/cloudfront"
-
-  prefix             = local.prefix
-  origin_domain_name = module.s3.web_static_bucket_domain_name
-
-  enabled             = var.cloudfront_config.enabled
-  enable_ipv6         = var.cloudfront_config.enable_ipv6
-  aliases             = var.cloudfront_config.aliases
-  default_root_object = var.cloudfront_config.default_root_object
-  http_version        = var.cloudfront_config.http_version
-  price_class         = var.cloudfront_config.price_class
-  web_acl_id          = var.cloudfront_config.web_acl_id
-  comment             = "${var.project_name}-${var.environment} CDN"
-
-  default_cache_allowed_methods = var.cloudfront_config.default_cache_allowed_methods
-  default_cache_cached_methods  = var.cloudfront_config.default_cache_cached_methods
-  viewer_protocol_policy        = var.cloudfront_config.viewer_protocol_policy
-  compress                      = var.cloudfront_config.compress
-  min_ttl                       = var.cloudfront_config.min_ttl
-  default_ttl                   = var.cloudfront_config.default_ttl
-  max_ttl                       = var.cloudfront_config.max_ttl
-
-  forward_query_string            = var.cloudfront_config.forward_query_string
-  forward_query_string_cache_keys = var.cloudfront_config.forward_query_string_cache_keys
-  forward_cookies                 = var.cloudfront_config.forward_cookies
-  forward_cookie_names            = var.cloudfront_config.forward_cookie_names
-  forward_headers                 = var.cloudfront_config.forward_headers
-
-  geo_restriction_type      = var.cloudfront_config.geo_restriction_type
-  geo_restriction_locations = var.cloudfront_config.geo_restriction_locations
-
-  logging_bucket          = var.cloudfront_config.logging_bucket
-  logging_prefix          = var.cloudfront_config.logging_prefix
-  logging_include_cookies = var.cloudfront_config.logging_include_cookies
-
-  acm_certificate_arn      = var.cloudfront_config.acm_certificate_arn
-  minimum_protocol_version = var.cloudfront_config.minimum_protocol_version
-
-  tags = merge(local.common_tags, var.cloudfront_config.tags)
-}
-
 module "rds" {
   source = "../../modules/rds"
 
@@ -256,6 +214,50 @@ module "alb_news" {
   enable_waf                = var.news_alb_config.enable_waf
   default_target_group_name = var.news_alb_config.default_target_group_name
   target_groups             = var.news_alb_config.target_groups
+}
+
+module "cloudfront" {
+  source = "../../modules/cloudfront"
+
+  prefix                 = local.prefix
+  origin_domain_name     = module.s3.web_static_bucket_domain_name
+  alb_origin_domain_name = module.alb_app.load_balancer_dns_name
+  alb_origin_id          = module.alb_app.load_balancer_arn_suffix
+
+  enabled             = var.cloudfront_config.enabled
+  enable_ipv6         = var.cloudfront_config.enable_ipv6
+  aliases             = var.cloudfront_config.aliases
+  default_root_object = var.cloudfront_config.default_root_object
+  http_version        = var.cloudfront_config.http_version
+  price_class         = var.cloudfront_config.price_class
+  web_acl_id          = var.cloudfront_config.web_acl_id
+  comment             = "${var.project_name}-${var.environment} CDN"
+
+  default_cache_allowed_methods = var.cloudfront_config.default_cache_allowed_methods
+  default_cache_cached_methods  = var.cloudfront_config.default_cache_cached_methods
+  viewer_protocol_policy        = var.cloudfront_config.viewer_protocol_policy
+  compress                      = var.cloudfront_config.compress
+  min_ttl                       = var.cloudfront_config.min_ttl
+  default_ttl                   = var.cloudfront_config.default_ttl
+  max_ttl                       = var.cloudfront_config.max_ttl
+
+  forward_query_string            = var.cloudfront_config.forward_query_string
+  forward_query_string_cache_keys = var.cloudfront_config.forward_query_string_cache_keys
+  forward_cookies                 = var.cloudfront_config.forward_cookies
+  forward_cookie_names            = var.cloudfront_config.forward_cookie_names
+  forward_headers                 = var.cloudfront_config.forward_headers
+
+  geo_restriction_type      = var.cloudfront_config.geo_restriction_type
+  geo_restriction_locations = var.cloudfront_config.geo_restriction_locations
+
+  logging_bucket          = var.cloudfront_config.logging_bucket
+  logging_prefix          = var.cloudfront_config.logging_prefix
+  logging_include_cookies = var.cloudfront_config.logging_include_cookies
+
+  acm_certificate_arn      = var.cloudfront_config.acm_certificate_arn
+  minimum_protocol_version = var.cloudfront_config.minimum_protocol_version
+
+  tags = merge(local.common_tags, var.cloudfront_config.tags)
 }
 
 module "cloudwatch" {
