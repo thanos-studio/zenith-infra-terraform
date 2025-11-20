@@ -317,6 +317,39 @@ variable "news_alb_config" {
   })
 }
 
+variable "cloudfront_config" {
+  description = "Configuration for the CloudFront distribution that fronts the static assets bucket."
+  type = object({
+    enabled                         = bool
+    enable_ipv6                     = bool
+    aliases                         = list(string)
+    default_root_object             = string
+    http_version                    = string
+    price_class                     = string
+    web_acl_id                      = string
+    default_cache_allowed_methods   = list(string)
+    default_cache_cached_methods    = list(string)
+    viewer_protocol_policy          = string
+    compress                        = bool
+    min_ttl                         = number
+    default_ttl                     = number
+    max_ttl                         = number
+    forward_query_string            = bool
+    forward_query_string_cache_keys = list(string)
+    forward_cookies                 = string
+    forward_cookie_names            = list(string)
+    forward_headers                 = list(string)
+    geo_restriction_type            = string
+    geo_restriction_locations       = list(string)
+    logging_bucket                  = string
+    logging_prefix                  = string
+    logging_include_cookies         = bool
+    acm_certificate_arn             = string
+    minimum_protocol_version        = string
+    tags                            = map(string)
+  })
+}
+
 variable "cloudfront_distribution_ids" {
   description = "CloudFront distribution IDs that should appear on the dashboards."
   type        = list(string)

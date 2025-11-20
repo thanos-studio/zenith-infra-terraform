@@ -1,24 +1,102 @@
-# terraform-work-starter
+# Zenith Infrastructure Terraform
 
-This repository is a lightweight Terraform starter kit for infrastructure developers who need a quick and organized baseline project.
+Jot down description and instructions for your Terraform project.
 
-## Features
+---
 
-- opinionated directory structure that separates modules, environments, and shared state
-- sample `main.tf` plus minimal supporting files so you can start building in minutes
-- ready-to-use `.terraform-version` + backend settings you can adjust per team
+## Diagram
+![ZENITH_INFRA](ZENITH_INFRA.drawio.png)
 
-## Requirements
+## Introduction
 
-- Terraform 1.5+ (or a version pinned in `.terraform-version`)
-- Access to your chosen backend (local, S3, GCS, etc.)
+Jot down a brief description of the project, its purpose, and any.
 
-## Usage
+---
+## Structure
+```
+.
+├── env/
+│   ├──your-env/              # Description of your environment (dev/prod)
+├── modules/
+│   ├── nested_module/        # Simple description of the module
+├── keypair/                  # SSH public keys consumed by the bastion module
+├── README.md
+└── terraform.*               # Shared configs / helpers
+```
 
-1. Install the required Terraform version.
-2. Copy or adapt the starter files into your project.
-3. Run `terraform init`, `terraform plan`, and `terraform apply` as usual.
+---
+## Module Overview
+| Module      | Purpose |
+|-------------|---------|
+| **nested_module** | Write your module purpose here. |
 
-## License
+---
+## SSH Key Preparation
+The EC2 bastion module expects a public key at `keypair/<key_name>.pub`.
 
-Available under the terms of the MIT License.
+```bash
+# Generate a new SSH key pair
+mkdir -p keypair
+ssh-keygen -t ed25519 -f keypair/ec2-kp-prod -C "ops@somedomain"
+
+# Result: keypair/ec2-kp-prod (private) & keypair/ec2-kp-prod.pub (public)
+# Ensure the .pub file name matches `bastion_key_name` used in tfvars.
+```
+
+> ⚠️ Never commit private keys. Keep only the public `.pub` file in repo if
+> needed.
+
+---
+## Deploying Environments
+Each environment maintains its own backend, variables, and tfvars.
+
+### 1. Configure `terraform.tfvars`
+Edit the environment-specific `terraform.tfvars` and set secrets:
+```hcl
+# env/dev/terraform.tfvars
+environment           = "dev"
+project_name          = "aws-base-infra"
+region                = "ap-northeast-2"
+prefix                = "sigmoid"
+```
+Copy to `env/prod/terraform.tfvars` and adjust CIDR, instance types, password,
+and retention values as needed.
+
+### 2. Initialize
+From the environment directory:
+```bash
+cd env/dev
+terraform init
+```
+Repeat inside `env/prod` when ready.
+
+### 3. Validate & Plan
+```bash
+terraform validate
+terraform plan -out dev.plan
+```
+
+### 4. Apply
+```bash
+terraform apply dev.plan
+```
+
+### 5. Promote to Production
+```bash
+cd ../prod
+terraform init
+terraform validate
+terraform plan -out prod.plan
+terraform apply prod.plan
+```
+
+> ☝️ Write any additional instructions or caveats for deploying here.
+
+---
+## Useful Outputs
+Both environments export key outputs such as <resources name goes here>. Run
+`terraform output` inside the environment directory to inspect.
+
+---
+## Notes
+- Add any additional notes, caveats, or instructions here.
